@@ -29,7 +29,7 @@ const create = async (signer:any) => {
 }
 
 const list = async (signer:any) => {
-    const item = '0x04cc63e86988772f160faef3524fe92864244560'
+    const item = '0x489518c8b02882733bc041c8c62cb87408bd9793'
     const ask = "10000000"
     const moveCallTxn = await signer.executeMoveCall({
         packageObjectId,
@@ -101,6 +101,33 @@ const delist_and_take = async (signer:any) => {
 //     console.log('SplitCoin txn', splitTxn);
 // }
 
+const query_marketplace = async () => {
+
+    // // @ts-ignore
+    // console.log(txn.details.reference.digest);
+    // // @ts-ignore
+    // const details = await provider.getTransactionWithEffects(txn.details.reference.digest);
+    // console.log(details);
+    // const a = await provider.getTransactionsForAddress(marketplaceObjectId,true)
+    // const b = await provider.getTransactionWithEffects(a[0])
+    // const c = b.effects.events
+    // const d = await provider.getObject(
+    //     '0x5beb445750cb71e1806444bb1f5b402c27ff9232',
+    // );
+    // // @ts-ignore
+    // console.log(d.details)
+    // @ts-ignore
+    // console.log(c[7])
+    // const a = await provider.getDynamicFields(marketplaceObjectId)
+    const e = await provider.getObject('0x2dffaf94da0aa341f943a0638fecc381104ac492')
+    // const e = await provider.getDynamicFieldObject('0x2::object::ID {bytes: 0x489518c8b02882733bc041c8c62cb87408bd9793}',"0x5beb445750cb71e1806444bb1f5b402c27ff9232")
+    // @ts-ignore
+    console.log(e.details.data.fields)
+
+
+}
+
+
 
 
 const main = async() =>{
@@ -110,5 +137,7 @@ const main = async() =>{
     // await delist_and_take(signer);
     // await split(signer);
     // await buy_and_take(signer);
+    await query_marketplace()
+
 }
 main()
