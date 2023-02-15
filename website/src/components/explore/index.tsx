@@ -2,7 +2,8 @@ import { Tab } from "@headlessui/react"
 import React, {useEffect, useState} from "react";
 import {ethos} from "ethos-connect";
 import {JsonRpcProvider} from "@mysten/sui.js";
-import {marketplaceObjectId} from "../constants";
+import {marketplaceObjectId, packageObjectId} from "../constants";
+import {LoadingState} from "../../jotai";
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
@@ -12,22 +13,120 @@ const  Explore = () =>{
         Listings: [],
     })
     const {status, wallet } = ethos.useWallet();
+    // const [openLoading,setOpenLoading] =useAtom(LoadingState)
+    const [NFTListData,setNFTListData] = useState([])
     const provider = new JsonRpcProvider();
     useEffect(()=>{
-
         const result = async ()=>{
-         const data = await provider.getTransactionsForAddress(marketplaceObjectId)
-            const data_1 = await provider.getTransactionWithEffects(data[0])
-            const data_2 = await provider.getTransactionWithEffects(data[1])
-            console.log(data_1)
-            console.log(data_2)
+            // provider.c
+            // console.log(coins)
+            // console.log(wallet)
+            // const tx_object = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
+            //     "0x5061ea92790e4b7a96703e15cc75a332e85caa6f",
+            //     BigInt("10000000"),
+            // )
+            console.log(wallet)
+            //拿到市场所有出价
+            const allList = await provider.getDynamicFields(marketplaceObjectId);
+            // console.log(allList)
+            let NFTList = []
+            for (let i = 0; i < allList.data.length; i++) {
+                if (allList.data[i].objectType == `${packageObjectId}::marketplace::Listing`) {
+                    const ask = await provider.getObject(allList.data[i].objectId)
+                    // @ts-ignore
+                    const price = (ethos.formatBalance(ask.details.data.fields.ask))
+                    // @ts-ignore
+                    const owner = ask.details.data.fields.owner
+                    const getDynamicFields = await provider.getDynamicFields(allList.data[i].objectId)
+                    const NFTDetails = await provider.getObject(getDynamicFields.data[0].objectId)
+                    // @ts-ignore
+                    const objectId = NFTDetails.details.data.fields.id.id
+                    // @ts-ignore
+                    const name = NFTDetails.details.data.fields.name
+                    // @ts-ignore
+                    const url = NFTDetails.details.data.fields.url
+                    let NFTData = {
+                        price,
+                        owner,
+                        objectId,
+                        name,
+                        url
+                    }
+                    NFTList.push(NFTData)
+                }
+            }
+            setNFTListData(NFTList)
         }
-
         result()
-        // console.log(wallet?.contents)
 
+    },[])
 
-    },[wallet?.address])
+    const BuyNFT = async (objectID) => {
+        const tx_object = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
+            wallet.address,
+            BigInt("10000000"),
+        )
+        // @ts-ignore
+        console.log(tx_object[0].details.data.fields.id.id)
+        // @ts-ignore
+        console.log(tx_object[1].details.data.fields.id.id)
+
+        try {
+            const signableTransaction = {
+                kind: 'mergeCoins' as const,
+                data: {
+                    // @ts-ignore
+                    primary_coin:tx_object[0].details.data.fields.id.id,
+                    // @ts-ignore
+                    coin_to_merge:tx_object[1].details.data.fields.id.id,
+                    // @ts-ignore
+                    gas:tx_object[1].details.data.fields.id.id,
+                    gasBudget: 1000,
+                },
+            }
+
+            // @ts-ignore
+            const result = await wallet.signAndExecuteTransaction(signableTransaction)
+            console.log(result)
+        } catch (error) {
+            console.log(error)
+        }
+        // console.log(wallet?.getAccounts)
+        // try {
+        //     const item = objectID
+        //     const signableTransaction = {
+        //         kind: 'moveCall' as const,
+        //         data: {
+        //             packageObjectId,
+        //             module: 'marketplace',
+        //             function: 'buy_and_take',
+        //             typeArguments: [
+        //                 '0x2::devnet_nft::DevNetNFT',
+        //                 '0x2::sui::SUI'
+        //             ],
+        //             arguments: [
+        //                 marketplaceObjectId,
+        //                 item,
+        //                 // paid
+        //             ],
+        //             gasBudget: 1000000,
+        //         },
+        //     }
+        //     const result = await wallet.signAndExecuteTransaction(signableTransaction)
+        //     console.log(result)
+        //     // @ts-ignore
+        //     const tx_status = result.effects.status.status;
+        //     if (tx_status == "success") {
+        //
+        //         console.log("成功了")
+        //     } else {
+        //
+        //     }
+        // } catch (error) {
+        //     console.log(error)
+        // }
+
+    }
     return(
         <>
             <div className="flex pt-18">
@@ -61,20 +160,21 @@ const  Explore = () =>{
                                 <Tab.Panel
                                     className={classNames(' rounded-xl p-1 ')}>
 
-                                    <div className="p-5 ">
+                                    <div className="p-5 mx-auto">
 
-                                        <div className="grid md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4 ">
-                                            <div className="rounded-xl p-4 shadow hover:bg-gray-200 hover:-translate-y-3  transform transition duration-500">
-                                                <img className='rounded-lg' src="https://nft-collections.s3.amazonaws.com/keepsake/character-2.png" alt=""/>
+                                        <div className="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4 ">
+                                            {NFTListData.map(item=>(
+                                            <div key={item.objectId} className="rounded-xl p-4 shadow hover:bg-gray-200 hover:-translate-y-3  transform transition duration-500">
+                                                <img className='rounded-lg w-80' src={item.url} alt=""/>
                                                 <div className="my-3 flex justify-between items-center">
                                                     <div className="text-black font-semibold ">
-                                                        Keepsake Noot
+                                                        {item.name}
                                                     </div>
-                                                    <div className="px-4 py-1 bg-indigo-600 rounded-xl text-sm  text-white">
-                                                        <button className="">
+
+                                                        <button onClick={()=>BuyNFT(item.objectId)} className="px-4 py-1 bg-indigo-600 rounded-xl text-sm  text-white">
                                                             Buy
                                                         </button>
-                                                    </div>
+
 
                                                 </div>
 
@@ -84,10 +184,10 @@ const  Explore = () =>{
                                                             <img  className="rounded-2xl w-10" src="https://gravatar.com/avatar/63e46c3b96a867ec108f133d?f=y&d=identicon&size=50" alt=""/>
                                                             <div className="ml-2">
                                                                 <div className="text-sm text-gray-600 font-light">
-                                                                    Created by
+                                                                    Sell by
                                                                 </div>
                                                                 <div className="text-sm font-semibold">
-                                                                    Oxeb...6378
+                                                                    {ethos.truncateMiddle(item.owner,4)}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -98,7 +198,7 @@ const  Explore = () =>{
                                                             Current Price
                                                         </div>
                                                         <div className="text-right font-semibold">
-                                                            0.01 SUI
+                                                            {item.price} SUI
                                                         </div>
 
                                                     </div>
@@ -107,6 +207,8 @@ const  Explore = () =>{
 
 
                                             </div>
+
+                                            ))}
                                         </div>
                                     </div>
 
