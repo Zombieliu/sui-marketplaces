@@ -10,7 +10,7 @@ const Loading = () =>{
     return(
         <>
             <Transition.Root show={openLoading} as={Fragment}>
-                <Dialog as="div" className="relative z-30" onClose={()=>false}>
+                <Dialog as="div" className="relative z-50" onClose={()=>false}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"

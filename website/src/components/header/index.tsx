@@ -58,7 +58,7 @@ export function Header() {
         <header >
             <nav >
                 <div className={classNames(scroll?"":"",
-                    " flex backdrop-blur-sm  bg-white/55 fixed z-50 inset-x-0  transition duration-700  pl-5  mx-auto items-center  p-3 justify-between   sm:px-6  lg:px-10 xl:px-20  items-center ")}>
+                    " flex backdrop-blur-sm  bg-white/55 fixed z-40 inset-x-0  transition duration-700  pl-5  mx-auto items-center  p-3 justify-between   sm:px-6  lg:px-10 xl:px-20  items-center ")}>
                 <div className="relative z-10 flex items-center gap-16">
                         <a href="/" >
                             <Logo className="h-10 w-auto" />

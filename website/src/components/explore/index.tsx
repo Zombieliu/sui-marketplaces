@@ -4,6 +4,8 @@ import {ethos} from "ethos-connect";
 import {JsonRpcProvider} from "@mysten/sui.js";
 import {marketplaceObjectId, packageObjectId} from "../constants";
 import {LoadingState} from "../../jotai";
+import {useAtom} from "jotai";
+import Loading from "../loading";
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
@@ -12,123 +14,112 @@ const  Explore = () =>{
     let [categories] = useState({
         Listings: [],
     })
+    const [openLoading,setOpenLoading] =useAtom(LoadingState)
     const {status, wallet } = ethos.useWallet();
-    // const [openLoading,setOpenLoading] =useAtom(LoadingState)
+    const [queryDataState,setQueryDataState] = useState(false)
     const [NFTListData,setNFTListData] = useState([])
     const provider = new JsonRpcProvider();
     useEffect(()=>{
-        const result = async ()=>{
-            // provider.c
-            // console.log(coins)
-            // console.log(wallet)
-            // const tx_object = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
-            //     "0x5061ea92790e4b7a96703e15cc75a332e85caa6f",
-            //     BigInt("10000000"),
-            // )
-            console.log(wallet)
-            //拿到市场所有出价
-            const allList = await provider.getDynamicFields(marketplaceObjectId);
-            // console.log(allList)
-            let NFTList = []
-            for (let i = 0; i < allList.data.length; i++) {
-                if (allList.data[i].objectType == `${packageObjectId}::marketplace::Listing`) {
-                    const ask = await provider.getObject(allList.data[i].objectId)
-                    // @ts-ignore
-                    const price = (ethos.formatBalance(ask.details.data.fields.ask))
-                    // @ts-ignore
-                    const owner = ask.details.data.fields.owner
-                    const getDynamicFields = await provider.getDynamicFields(allList.data[i].objectId)
-                    const NFTDetails = await provider.getObject(getDynamicFields.data[0].objectId)
-                    // @ts-ignore
-                    const objectId = NFTDetails.details.data.fields.id.id
-                    // @ts-ignore
-                    const name = NFTDetails.details.data.fields.name
-                    // @ts-ignore
-                    const url = NFTDetails.details.data.fields.url
-                    let NFTData = {
-                        price,
-                        owner,
-                        objectId,
-                        name,
-                        url
-                    }
-                    NFTList.push(NFTData)
-                }
-            }
-            setNFTListData(NFTList)
-        }
-        result()
+        query()
 
     },[])
+    const query = async ()=>{
+        setQueryDataState(true)
+        // provider.c
+        // console.log(coins)
+        // console.log(wallet)
+        // const tx_object = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
+        //     "0x5061ea92790e4b7a96703e15cc75a332e85caa6f",
+        //     BigInt("10000000"),
+        // )
+        console.log(wallet)
+        //拿到市场所有出价
+        const allList = await provider.getDynamicFields(marketplaceObjectId);
+        // console.log(allList)
+        let NFTList = []
+        for (let i = 0; i < allList.data.length; i++) {
+            if (allList.data[i].objectType == `${packageObjectId}::marketplace::Listing`) {
 
-    const BuyNFT = async (objectID) => {
+                const ask = await provider.getObject(allList.data[i].objectId)
+                // @ts-ignore
+                const price = (ask.details.data.fields.ask)
+                // @ts-ignore
+                const owner = ask.details.data.fields.owner
+
+                const getDynamicFields = await provider.getDynamicFields(allList.data[i].objectId)
+                const NFTDetails = await provider.getObject(getDynamicFields.data[0].objectId)
+                // @ts-ignore
+                const objectId = NFTDetails.details.data.fields.id.id
+                // @ts-ignore
+                const name = NFTDetails.details.data.fields.name
+                // @ts-ignore
+                const url = NFTDetails.details.data.fields.url
+                let NFTData = {
+                    price,
+                    owner,
+                    objectId,
+                    name,
+                    url
+                }
+                NFTList.push(NFTData)
+            }
+        }
+        setNFTListData(NFTList)
+        setQueryDataState(false)
+    }
+    const BuyNFT = async (objectID,price) => {
+        setOpenLoading(true)
         const tx_object = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
             wallet.address,
-            BigInt("10000000"),
+            BigInt(price),
         )
-        // @ts-ignore
-        console.log(tx_object[0].details.data.fields.id.id)
-        // @ts-ignore
-        console.log(tx_object[1].details.data.fields.id.id)
+        let pay_list_object = []
+        for (let i=0;i<tx_object.length;i++){
+            // @ts-ignore
+            pay_list_object.push(tx_object[i].details.data.fields.id.id)
+        }
 
         try {
+            const item = objectID
             const signableTransaction = {
-                kind: 'mergeCoins' as const,
+                kind: 'moveCall' as const,
                 data: {
-                    // @ts-ignore
-                    primary_coin:tx_object[0].details.data.fields.id.id,
-                    // @ts-ignore
-                    coin_to_merge:tx_object[1].details.data.fields.id.id,
-                    // @ts-ignore
-                    gas:tx_object[1].details.data.fields.id.id,
-                    gasBudget: 1000,
+                    packageObjectId,
+                    module: 'marketplace',
+                    function: 'buy_and_take',
+                    typeArguments: [
+                        '0x2::devnet_nft::DevNetNFT',
+                        '0x2::sui::SUI'
+                    ],
+                    arguments: [
+                        marketplaceObjectId,
+                        item,
+                        price,
+                        pay_list_object
+                        // paid
+                    ],
+                    gasBudget: 10000,
                 },
             }
-
-            // @ts-ignore
             const result = await wallet.signAndExecuteTransaction(signableTransaction)
             console.log(result)
+            // @ts-ignore
+            const tx_status = result.effects.status.status;
+            if (tx_status == "success") {
+                await query()
+                console.log("成功了")
+            } else {
+
+            }
         } catch (error) {
             console.log(error)
         }
-        // console.log(wallet?.getAccounts)
-        // try {
-        //     const item = objectID
-        //     const signableTransaction = {
-        //         kind: 'moveCall' as const,
-        //         data: {
-        //             packageObjectId,
-        //             module: 'marketplace',
-        //             function: 'buy_and_take',
-        //             typeArguments: [
-        //                 '0x2::devnet_nft::DevNetNFT',
-        //                 '0x2::sui::SUI'
-        //             ],
-        //             arguments: [
-        //                 marketplaceObjectId,
-        //                 item,
-        //                 // paid
-        //             ],
-        //             gasBudget: 1000000,
-        //         },
-        //     }
-        //     const result = await wallet.signAndExecuteTransaction(signableTransaction)
-        //     console.log(result)
-        //     // @ts-ignore
-        //     const tx_status = result.effects.status.status;
-        //     if (tx_status == "success") {
-        //
-        //         console.log("成功了")
-        //     } else {
-        //
-        //     }
-        // } catch (error) {
-        //     console.log(error)
-        // }
+        setOpenLoading(false)
 
     }
     return(
         <>
+            <Loading/>
             <div className="flex pt-18">
 
                 <div className="text-black w-2/12 fixed">
@@ -156,12 +147,16 @@ const  Explore = () =>{
                                 </div>
                             </Tab.List>
                             {/*Recent*/}
-                            <Tab.Panels className=" pt-20">
+                            <Tab.Panels className=" pt-20 ">
                                 <Tab.Panel
-                                    className={classNames(' rounded-xl p-1 ')}>
+                                    className={classNames(' rounded-xl p-1  ')}>
+                                    <div className={queryDataState?"absolute justify-center right-1/2  top-1/2":"hidden"}>
+                                        <div className="animate-spin text-black   ">
+                                            <i className="fa fa-spinner f-spin fa-2x fa-fw"></i>
+                                        </div>
+                                    </div>
 
-                                    <div className="p-5 mx-auto">
-
+                                    <div className={queryDataState?"hidden":"p-5"}>
                                         <div className="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4 ">
                                             {NFTListData.map(item=>(
                                             <div key={item.objectId} className="rounded-xl p-4 shadow hover:bg-gray-200 hover:-translate-y-3  transform transition duration-500">
@@ -171,7 +166,7 @@ const  Explore = () =>{
                                                         {item.name}
                                                     </div>
 
-                                                        <button onClick={()=>BuyNFT(item.objectId)} className="px-4 py-1 bg-indigo-600 rounded-xl text-sm  text-white">
+                                                        <button onClick={()=>BuyNFT(item.objectId,item.price)} className="px-4 py-1 bg-indigo-600 rounded-xl text-sm  text-white">
                                                             Buy
                                                         </button>
 
@@ -198,7 +193,7 @@ const  Explore = () =>{
                                                             Current Price
                                                         </div>
                                                         <div className="text-right font-semibold">
-                                                            {item.price} SUI
+                                                            {(ethos.formatBalance(item.price))} SUI
                                                         </div>
 
                                                     </div>
