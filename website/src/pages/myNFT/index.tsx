@@ -2,16 +2,17 @@ import {Dialog, Disclosure, Tab, Transition} from "@headlessui/react";
 import {useAtom} from "jotai";
 import {
 
-    LoadingState,
+    LoadingState, SellPop_up_boxState, SellState,
 } from "../../jotai";
 
 import React, {Fragment, useEffect, useState} from "react";
 
 import {ethos} from "ethos-connect";
-import {Header} from "../../components/header";
-import {marketplaceObjectId, packageObjectId} from "../../components/constants";
+import {gamePackageObjectId, marketplaceObjectId, packageObjectId} from "../../components/constants";
 import Loading from "../../components/loading";
 import {JsonRpcProvider} from "@mysten/sui.js";
+import Pop_up_box from "../../components/pop_up_box";
+import Header from "../../components/header";
 
 
 function classNames(...classes) {
@@ -21,7 +22,10 @@ function classNames(...classes) {
 const MyNFTList = () =>{
     const [openLoading,setOpenLoading] =useAtom(LoadingState)
     const {status, wallet } = ethos.useWallet();
-    const [selectInput,setSelectInput] = useState(false)
+    const [selectBurnInput,setSelectBurnInput] = useState(false)
+    const [selectSellInput,setSelectSellInput] = useState(false)
+    const [sellState,setSellState] =useAtom(SellState)
+    const [,setSellPop_up_boxState] = useAtom(SellPop_up_boxState)
     const [sellNFT,setSellNFT] =useState(
         {
             url:"",
@@ -98,14 +102,56 @@ const MyNFTList = () =>{
             const tx_status = result.effects.status.status;
             if (tx_status == "success") {
                 await query()
-                console.log("成功了")
+                setSellState({state:true,type:"上架",hash: result.certificate.transactionDigest})
+                setSellPop_up_boxState(true)
             } else {
-
+                setSellState({state:false,type:"上架",hash: ""})
+                setSellPop_up_boxState(true)
             }
         } catch (error) {
             console.log(error)
         }
-        setSelectInput(false)
+        setSelectSellInput(false)
+        setOpenLoading(false)
+    }
+
+    const  Burn = async () => {
+        setOpenLoading(true)
+        const address = (document.getElementById("address_input")as HTMLInputElement).value
+        console.log("item",sellNFT.objectID)
+        console.log("address",address)
+        try {
+            const item = sellNFT.objectID
+            const signableTransaction = {
+                kind: 'moveCall' as const,
+                data: {
+                    packageObjectId:gamePackageObjectId,
+                    module: 'player',
+                    function: 'sell_items',
+                    typeArguments: [],
+                    arguments: [
+                       item,
+                       address
+                    ],
+                    gasBudget: 10000,
+                },
+            }
+            const result = await wallet.signAndExecuteTransaction(signableTransaction)
+            console.log(result)
+            // @ts-ignore
+            const tx_status = result.effects.status.status;
+            if (tx_status == "success") {
+                await query()
+                setSellState({state:true,type:"销毁",hash: result.certificate.transactionDigest})
+                setSellPop_up_boxState(true)
+            } else {
+                setSellState({state:false,type:"销毁",hash: ""})
+                setSellPop_up_boxState(true)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        setSelectBurnInput(false)
         setOpenLoading(false)
     }
     return(
@@ -126,13 +172,20 @@ const MyNFTList = () =>{
                                     {item.name}
                                 </div>
                             </div>
-                            <div className="flex justify-center items-center mt-2">
-                                <button onClick={()=>{setSelectInput(true),setSellNFT({
+                            <div className="flex justify-between items-center mt-2">
+                                <button onClick={()=>{setSelectSellInput(true),setSellNFT({
+                                    url:item.url,
+                                    name:item.name,
+                                    objectID:item.objectId
+                                })}} className="px-4 w-full py-1 mr-4 bg-indigo-600 rounded-xl text-sm  text-center text-white">
+                                    Sell
+                                </button>
+                                <button onClick={()=>{setSelectBurnInput(true),setSellNFT({
                                     url:item.url,
                                     name:item.name,
                                     objectID:item.objectId
                                 })}} className="px-4 w-full py-1 bg-indigo-600 rounded-xl text-sm  text-center text-white">
-                                    Sell
+                                    Burn
                                 </button>
                             </div>
                         </div>
@@ -148,8 +201,9 @@ const MyNFTList = () =>{
                     暂无NFT
                 </div>
             </div>
-            <Transition.Root show={selectInput} as={Fragment}>
-                <Dialog as="div" className="fixed z-50 inset-0 overflow-y-auto " onClose={setSelectInput}>
+
+            <Transition.Root show={selectSellInput} as={Fragment}>
+                <Dialog as="div" className="fixed z-50 inset-0 overflow-y-auto " onClose={setSelectSellInput}>
                     <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center shadow-2xl   sm:block sm:p-0">
                         <Transition.Child
                             as={Fragment}
@@ -178,7 +232,7 @@ const MyNFTList = () =>{
                             <div className="inline-block align-bottom p-0.5 rounded-lg  w-11/12 md:w-5/12 2xl:w-3/12  rounded-lg  text-left overflow-hidden shadow-xl transform transition-all sm:y-8 sm:align-middle   ">
                                 <div className="bg-white px-4 py-5 sm:px-6 lg:px-12 rounded-md">
                                     <div className='flex justify-end text-xl font-light text-black 	mb-5 items-centers'>
-                                        <button   onClick={() => setSelectInput(false)}
+                                        <button   onClick={() => setSelectSellInput(false)}
                                                   className="fa fa-times  outline-none" aria-hidden="true"></button>
                                     </div>
                                     <div className="flex justify-center">
@@ -202,10 +256,78 @@ const MyNFTList = () =>{
                                         autoComplete="off"
                                     />
                                     <div className="flex justify-between mt-5">
-                                        <button onClick={()=>setSelectInput(false)} className="bg-red-100 text-red-500 px-4 py-1 rounded-lg ">
+                                        <button onClick={()=>setSelectSellInput(false)} className="bg-red-100 text-red-500 px-4 py-1 rounded-lg ">
                                             取消
                                         </button>
                                         <button onClick={sell} className="bg-green-100 text-green-500 px-4 py-1 rounded-lg ">
+                                            确认
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </Transition.Child>
+                    </div>
+                </Dialog>
+            </Transition.Root>
+
+            <Transition.Root show={selectBurnInput} as={Fragment}>
+                <Dialog as="div" className="fixed z-50 inset-0 overflow-y-auto " onClose={setSelectBurnInput}>
+                    <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center shadow-2xl   sm:block sm:p-0">
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0"
+                            enterTo="opacity-100"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100"
+                            leaveTo="opacity-0"
+                        >
+                            <Dialog.Overlay className="fixed inset-0 bg-gray-600 bg-opacity-80 transition-opacity" />
+                        </Transition.Child>
+
+                        {/* This element is to trick the browser into centering the modal contents. */}
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;
+          </span>
+                        <Transition.Child
+                            as={Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            enterTo="opacity-100 translate-y-0 sm:scale-100"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        >
+                            <div className="inline-block align-bottom p-0.5 rounded-lg  w-11/12 md:w-5/12 2xl:w-3/12  rounded-lg  text-left overflow-hidden shadow-xl transform transition-all sm:y-8 sm:align-middle   ">
+                                <div className="bg-white px-4 py-5 sm:px-6 lg:px-12 rounded-md">
+                                    <div className='flex justify-end text-xl font-light text-black 	mb-5 items-centers'>
+                                        <button   onClick={() => setSelectBurnInput(false)}
+                                                  className="fa fa-times  outline-none" aria-hidden="true"></button>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <div>
+                                            <img className="w-36 " src={sellNFT.url} alt=""/>
+                                            <div className="text-center font-semibold">
+                                                {sellNFT.name}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-center mt-2">
+                                        输入你的游戏角色ID
+                                    </div>
+                                    <input
+                                        className=" my-5  text-xs md:text-sm text-black  rounded-md p-2 w-full   border outline-none"
+                                        placeholder="0x...."
+                                        id="address_input"
+                                        autoComplete="off"
+                                    />
+                                    <div className="flex justify-between mt-5">
+                                        <button onClick={()=>setSelectBurnInput(false)} className="bg-red-100 text-red-500 px-4 py-1 rounded-lg ">
+                                            取消
+                                        </button>
+                                        <button onClick={Burn} className="bg-green-100 text-green-500 px-4 py-1 rounded-lg ">
                                             确认
                                         </button>
 
@@ -226,6 +348,8 @@ const ShelvesList = () =>{
     const [queryDataState,setQueryDataState] = useState(false)
     const {status, wallet } = ethos.useWallet();
     const [selectInput,setSelectInput] = useState(false)
+    const [sellState,setSellState] =useAtom(SellState)
+    const [,setSellPop_up_boxState] = useAtom(SellPop_up_boxState)
     const [sellNFT,setSellNFT] =useState(
         {
             url:"",
@@ -305,14 +429,16 @@ const ShelvesList = () =>{
             // @ts-ignore
             const tx_status = result.effects.status.status;
             if (tx_status == "success") {
-                await query()
-                console.log("成功了")
+                setSellState({state:true,type:"下架",hash: result.certificate.transactionDigest})
+                setSellPop_up_boxState(true)
             } else {
-
+                setSellState({state:false,type:"下架",hash: ""})
+                setSellPop_up_boxState(true)
             }
         } catch (error) {
             console.log(error)
         }
+        await query()
         setSelectInput(false)
         setOpenLoading(false)
 
@@ -443,6 +569,7 @@ const MyNFT = () =>{
         <div className="">
             <Header/>
             <Loading/>
+            <Pop_up_box/>
 
                 <div className="w-full fixed   z-10" >
                     <img className="absolute  w-full h-80" src="User_bg.png" alt=""/>

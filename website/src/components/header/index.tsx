@@ -34,14 +34,12 @@ function ChevronUpIcon(props) {
     )
 }
 
-export function Header() {
+const  Header = () =>{
     const { status, wallet } = ethos.useWallet();
     const [scroll,setScroll]=useState(false)
     const navigation = [
         { id:1 ,name: 'Export', href: '/home' },
         { id:2 ,name: 'MyNFT', href: '/myNFT' },
-        // { id:5 ,name: 'Job Fair', href: '/JobFair/开发' },
-
     ]
     if(typeof window !== "undefined"){
         window.onscroll = function() {myFunction()};
@@ -55,8 +53,6 @@ export function Header() {
     };
 
     return (
-        <header >
-            <nav >
                 <div className={classNames(scroll?"":"",
                     " flex backdrop-blur-sm  bg-white/55 fixed z-40 inset-x-0  transition duration-700  pl-5  mx-auto items-center  p-3 justify-between   sm:px-6  lg:px-10 xl:px-20  items-center ")}>
                 <div className="relative z-10 flex items-center gap-16">
@@ -65,9 +61,8 @@ export function Header() {
                         </a>
                         <div className="hidden lg:flex lg:gap-10">
                             {navigation.map((item) => (
-                                    <a key={item.name} href={item.href}
-                                        className="text-base font-medium text-gray-900    transition duration-700 "
-                                    >
+                                    <a key={item.name}  href={item.href}
+                                        className="text-base font-medium text-gray-900    transition duration-700 ">
                                         {item.name}
                                     </a>
                             ))}
@@ -132,7 +127,9 @@ export function Header() {
                         </div>
                     </div>
                 </div>
-            </nav>
-        </header>
+
     )
 }
+
+
+export default Header

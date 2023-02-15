@@ -1,11 +1,7 @@
-import {ethos,} from "ethos-connect";
 import React, {useEffect} from "react";
-import {useRouter} from "next/router";
-import {useAtom} from "jotai";
-import {MonsterDetails, RoleDetails, Select_LoginState, Select_RoleList} from "../../jotai";
 import Pop_up_box from "../../components/pop_up_box";
-import {Header} from "../../components/header";
 import Explore from "../../components/explore";
+import Header from "../../components/header";
 
 const Home = () =>{
 

@@ -3,9 +3,11 @@ import React, {useEffect, useState} from "react";
 import {ethos} from "ethos-connect";
 import {JsonRpcProvider} from "@mysten/sui.js";
 import {marketplaceObjectId, packageObjectId} from "../constants";
-import {LoadingState} from "../../jotai";
+import {LoadingState, SellPop_up_boxState, SellState} from "../../jotai";
 import {useAtom} from "jotai";
 import Loading from "../loading";
+import Link from "next/link";
+import Pop_up_box from "../pop_up_box";
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
@@ -18,6 +20,8 @@ const  Explore = () =>{
     const {status, wallet } = ethos.useWallet();
     const [queryDataState,setQueryDataState] = useState(false)
     const [NFTListData,setNFTListData] = useState([])
+    const [sellState,setSellState] =useAtom(SellState)
+    const [,setSellPop_up_boxState] = useAtom(SellPop_up_boxState)
     const provider = new JsonRpcProvider();
     useEffect(()=>{
         query()
@@ -107,9 +111,11 @@ const  Explore = () =>{
             const tx_status = result.effects.status.status;
             if (tx_status == "success") {
                 await query()
-                console.log("成功了")
+                setSellState({state:true,type:"购买",hash: result.certificate.transactionDigest})
+                setSellPop_up_boxState(true)
             } else {
-
+                setSellState({state:false,type:"购买",hash: ""})
+                setSellPop_up_boxState(true)
             }
         } catch (error) {
             console.log(error)
@@ -120,6 +126,7 @@ const  Explore = () =>{
     return(
         <>
             <Loading/>
+            <Pop_up_box/>
             <div className="flex pt-18">
 
                 <div className="text-black w-2/12 fixed">
@@ -181,9 +188,11 @@ const  Explore = () =>{
                                                                 <div className="text-sm text-gray-600 font-light">
                                                                     Sell by
                                                                 </div>
-                                                                <div className="text-sm font-semibold">
-                                                                    {ethos.truncateMiddle(item.owner,4)}
-                                                                </div>
+                                                                <Link legacyBehavior href={`https://explorer.sui.io/address/${item.owner}?network=devnet`} className="text-sm font-semibold">
+                                                                    <a target="_Blank">
+                                                                        {ethos.truncateMiddle(item.owner,4)}
+                                                                    </a>
+                                                                </Link>
                                                             </div>
                                                         </div>
 
