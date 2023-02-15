@@ -1,8 +1,10 @@
 module nfts::marketplace {
     use sui::dynamic_object_field as ofield;
-    use sui::tx_context::{Self, TxContext};
+    use sui::tx_context::{Self, TxContext, sender};
     use sui::object::{Self, ID, UID};
     use sui::coin::{Self, Coin};
+    use std::vector as vec;
+    use sui::pay;
     use sui::transfer;
 
     /// For when amount paid does not match the expected.
@@ -84,7 +86,8 @@ module nfts::marketplace {
     public fun buy<T: key + store, COIN>(
         marketplace: &mut Marketplace<COIN>,
         item_id: ID,
-        paid: Coin<COIN>,
+        paid: vector<Coin<COIN>>,
+        ctx: &mut TxContext,
     ): T {
         let Listing {
             id,
@@ -92,33 +95,42 @@ module nfts::marketplace {
             owner
         } = ofield::remove(&mut marketplace.id, item_id);
 
-        assert!(ask == coin::value(&paid), EAmountIncorrect);
-
+        let (paid_sui, remainder) = merge_and_split(paid, ask, ctx);
+        assert!(ask == coin::value(&paid_sui), EAmountIncorrect);
         // Check if there's already a Coin hanging and merge `paid` with it.
         // Otherwise attach `paid` to the `Marketplace` under owner's `address`.
         if (ofield::exists_<address>(&marketplace.id, owner)) {
             coin::join(
                 ofield::borrow_mut<address, Coin<COIN>>(&mut marketplace.id, owner),
-                paid
-            )
+                paid_sui
+            );
         } else {
-            ofield::add(&mut marketplace.id, owner, paid)
+            ofield::add(&mut marketplace.id, owner, paid_sui)
         };
-
+        transfer(remainder, sender(ctx));
         let item = ofield::remove(&mut id, true);
         object::delete(id);
         item
+    }
+
+    fun merge_and_split<T>(
+        coins: vector<Coin<T>>, amount: u64, ctx: &mut TxContext
+    ): (Coin<T>, Coin<T>) {
+        let base = vec::pop_back(&mut coins);
+        pay::join_vec(&mut base, coins);
+        assert!(coin::value(&base) > amount, 0);
+        (coin::split(&mut base, amount, ctx), base)
     }
 
     /// Call [`buy`] and transfer item to the sender.
     public entry fun buy_and_take<T: key + store, COIN>(
         marketplace: &mut Marketplace<COIN>,
         item_id: ID,
-        paid: Coin<COIN>,
+        paid: vector<Coin<COIN>>,
         ctx: &mut TxContext
     ) {
         transfer::transfer(
-            buy<T, COIN>(marketplace, item_id, paid),
+            buy<T, COIN>(marketplace, item_id, paid,ctx),
             tx_context::sender(ctx)
         )
     }
