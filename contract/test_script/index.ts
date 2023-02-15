@@ -108,6 +108,14 @@ const query_marketplace = async () => {
     const marketplace_listening_list = await provider.getDynamicFields(marketplaceObjectId)
 }
 
+const query_pay = async () =>{
+    const result = await provider.selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
+        '0xb56267e2916adf8f1b7cf4d528fe046e338ea9a9',
+        BigInt("10000000")
+    )
+    console.log(result)
+}
+
 const main = async() =>{
     const signer = new RawSigner(keypair, provider);
     // console.log(signer.mergeCoin())
@@ -117,6 +125,7 @@ const main = async() =>{
     // await split(signer);
     // await buy_and_take(signer);
     // await query_marketplace()
+    // await query_pay()
 }
 
 main()

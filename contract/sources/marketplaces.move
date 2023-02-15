@@ -115,7 +115,7 @@ module nfts::marketplace {
     ): (Coin<T>, Coin<T>) {
         let base = vec::pop_back(&mut coins);
         pay::join_vec(&mut base, coins);
-        assert!(coin::value(&base) > amount, 0);
+        assert!(coin::value(&base) >= amount, 0);
         (coin::split(&mut base, amount, ctx), base)
     }
 

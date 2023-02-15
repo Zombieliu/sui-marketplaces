@@ -1,5 +1,5 @@
-const packageObjectId = '0x40807ef32dd990cf1ba801dc63824ba8a80684da'
-const marketplaceObjectId = '0x0e355524cc51c523187d13e6507085a41157f907'
+const packageObjectId = '0xc023a0b6b240cb7fa850b18085fdc0333e6a17a3'
+const marketplaceObjectId = '0x64b5c339c2d884606d8a12de4760b4b4aafb33b3'
 const gamePackageObjectId = '0x21872eab1d01d73bc1bddc38a1e761780281ff08'
 export {
     marketplaceObjectId,packageObjectId,gamePackageObjectId
