@@ -99,8 +99,7 @@ const  Explore = () =>{
                         marketplaceObjectId,
                         item,
                         price,
-                        pay_list_object
-                        // paid
+                        pay_list_object,
                     ],
                     gasBudget: 10000,
                 },
