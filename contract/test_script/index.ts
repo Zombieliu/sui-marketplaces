@@ -9,8 +9,8 @@ const key_pair_struct:ExportedKeypair = {
     privateKey:private_key
 }
 const keypair = fromExportedKeypair(key_pair_struct)
-const packageObjectId = '0x5b53b2e30d52aee862f78bcdb2f59d1c7bde7f25'
-const marketplaceObjectId = '0x79ab9e748f4bed00356e3719c5f680a9b8d439d6'
+const packageObjectId = '0xca9d65e59b8d1ff475b96c8af5dc41fa623e4afe'
+const marketplaceObjectId = '0x4aaf15bc0f510a57d683d66df23c1277f6d88020'
 
 
 
@@ -51,6 +51,7 @@ const list = async (signer:any) => {
 
 const buy_and_take = async (signer:any) => {
     const item = '0x04cc63e86988772f160faef3524fe92864244560'
+    const ask = '1000'
     const paid = ['0x2d652fe16774ec7aa7a8e617b3e097332f271fcb']
     const moveCallTxn = await signer.executeMoveCall({
         packageObjectId,
@@ -63,6 +64,7 @@ const buy_and_take = async (signer:any) => {
         arguments: [
             marketplaceObjectId,
             item,
+            ask,
             paid
         ],
         gasBudget: 10000,
@@ -108,7 +110,7 @@ const query_marketplace = async () => {
 const main = async() =>{
     const signer = new RawSigner(keypair, provider);
     // console.log(signer.mergeCoin())
-    // await create(signer);
+    await create(signer);
     // await list(signer);
     // await delist_and_take(signer);
     // await split(signer);

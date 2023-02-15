@@ -86,8 +86,7 @@ module nfts::marketplace {
     public fun buy<T: key + store, COIN>(
         marketplace: &mut Marketplace<COIN>,
         item_id: ID,
-        paid: vector<Coin<COIN>>,
-        ctx: &mut TxContext,
+        paid: Coin<COIN>,
     ): T {
         let Listing {
             id,
@@ -95,19 +94,17 @@ module nfts::marketplace {
             owner
         } = ofield::remove(&mut marketplace.id, item_id);
 
-        let (paid_sui, remainder) = merge_and_split(paid, ask, ctx);
-        assert!(ask == coin::value(&paid_sui), EAmountIncorrect);
+        assert!(ask == coin::value(&paid), EAmountIncorrect);
         // Check if there's already a Coin hanging and merge `paid` with it.
         // Otherwise attach `paid` to the `Marketplace` under owner's `address`.
         if (ofield::exists_<address>(&marketplace.id, owner)) {
             coin::join(
                 ofield::borrow_mut<address, Coin<COIN>>(&mut marketplace.id, owner),
-                paid_sui
+                paid
             );
         } else {
-            ofield::add(&mut marketplace.id, owner, paid_sui)
+            ofield::add(&mut marketplace.id, owner, paid)
         };
-        transfer(remainder, sender(ctx));
         let item = ofield::remove(&mut id, true);
         object::delete(id);
         item
@@ -126,13 +123,17 @@ module nfts::marketplace {
     public entry fun buy_and_take<T: key + store, COIN>(
         marketplace: &mut Marketplace<COIN>,
         item_id: ID,
+        ask:u64,
         paid: vector<Coin<COIN>>,
         ctx: &mut TxContext
     ) {
+        let (paid_sui, remainder) = merge_and_split(paid, ask, ctx);
+        transfer::transfer(remainder,sender(ctx));
         transfer::transfer(
-            buy<T, COIN>(marketplace, item_id, paid,ctx),
+            buy<T, COIN>(marketplace, item_id, paid_sui),
             tx_context::sender(ctx)
-        )
+        );
+
     }
 
     /// Take profits from selling items on the `Marketplace`.
