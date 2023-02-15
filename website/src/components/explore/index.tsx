@@ -77,12 +77,12 @@ const  Explore = () =>{
             wallet.address,
             BigInt(price),
         )
+        console.log(tx_object)
         let pay_list_object = []
         for (let i=0;i<tx_object.length;i++){
             // @ts-ignore
-            pay_list_object.push(tx_object[i].details.data.fields.id.id)
+           pay_list_object.push( tx_object[i].details.data.fields.id.id)
         }
-
         try {
             const item = objectID
             const signableTransaction = {
@@ -99,8 +99,7 @@ const  Explore = () =>{
                         marketplaceObjectId,
                         item,
                         price,
-                        pay_list_object
-                        // paid
+                        pay_list_object,
                     ],
                     gasBudget: 10000,
                 },
