@@ -1,6 +1,7 @@
 import {Ed25519Keypair, JsonRpcProvider, RawSigner, TypeTag} from '@mysten/sui.js';
 import {fromExportedKeypair} from "@mysten/sui.js";
 import {ExportedKeypair} from "@mysten/sui.js/src/cryptography/keypair";
+import {marketplaceObjectId, packageObjectId} from "./constants";
 const provider = new JsonRpcProvider();
 const schema = new Ed25519Keypair().getKeyScheme();
 const private_key = 'QVg8OT8vnrT/JdXLHpV3wiBhR1FcdHmamoac5IE2PF+15p+mCrEzOnYixuwiaUOCyUl9emkEbvYoXka++RHEQQ=='
@@ -9,8 +10,8 @@ const key_pair_struct:ExportedKeypair = {
     privateKey:private_key
 }
 const keypair = fromExportedKeypair(key_pair_struct)
-const packageObjectId = '0xca9d65e59b8d1ff475b96c8af5dc41fa623e4afe'
-const marketplaceObjectId = '0x4aaf15bc0f510a57d683d66df23c1277f6d88020'
+
+
 
 
 

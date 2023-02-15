@@ -7,15 +7,10 @@ const Home = () =>{
 
         return (
             <>
-
                 <Pop_up_box/>
               <Header/>
                 <main>
                     <Explore/>
-
-
-
-
                 </main>
             </>
 
