@@ -1,6 +1,6 @@
-const packageObjectId = '0xc023a0b6b240cb7fa850b18085fdc0333e6a17a3'
-const marketplaceObjectId = '0x64b5c339c2d884606d8a12de4760b4b4aafb33b3'
-const gamePackageObjectId = '0x21872eab1d01d73bc1bddc38a1e761780281ff08'
+const packageObjectId = '0x00ca00095635ce33c9a97091ade1a110575431e9'
+const marketplaceObjectId = '0x2ba4661d0a835a686c7c2a1c5d22279769c40d44'
+const gamePackageObjectId = '0xd617b5a28ea3a855979799ebbb00e311b4dbe226'
 export {
     marketplaceObjectId,packageObjectId,gamePackageObjectId
 }
