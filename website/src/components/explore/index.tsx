@@ -36,10 +36,10 @@ const  Explore = () =>{
         //     "0x5061ea92790e4b7a96703e15cc75a332e85caa6f",
         //     BigInt("10000000"),
         // )
-        console.log(wallet)
+        // console.log(wallet)
         //拿到市场所有出价
         const allList = await provider.getDynamicFields(marketplaceObjectId);
-        // console.log(allList)
+        console.log(allList)
         let NFTList = []
         for (let i = 0; i < allList.data.length; i++) {
             if (allList.data[i].objectType == `${packageObjectId}::marketplace::Listing`) {
@@ -68,6 +68,8 @@ const  Explore = () =>{
                 NFTList.push(NFTData)
             }
         }
+
+        console.log(allList)
         setNFTListData(NFTList)
         setQueryDataState(false)
     }
