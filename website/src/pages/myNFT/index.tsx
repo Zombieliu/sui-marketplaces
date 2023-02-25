@@ -575,7 +575,7 @@ const MyNFT = () =>{
                     <img className="absolute  w-full h-80" src="User_bg.png" alt=""/>
                     <div className="absolute z-20 ">
                         <div className=" mt-48 flex mx-20 ">
-                            <img className="w-14 rounded-full mr-2" src="user_logo.PNG" alt=""/>
+                            <img className="w-14 rounded-full mr-2" src="" alt=""/>
                             <div className="flex flex-col justify-between">
                                 <div className="font-semibold">
                                     User
