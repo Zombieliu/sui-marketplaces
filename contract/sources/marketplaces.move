@@ -1,4 +1,4 @@
-module nfts::marketplace {
+module nfttest1::marketplace {
     use sui::dynamic_object_field as ofield;
     use sui::tx_context::{Self, TxContext, sender};
     use sui::object::{Self, ID, UID};

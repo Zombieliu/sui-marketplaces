@@ -118,8 +118,12 @@ const query_pay = async () =>{
 
 const main = async() =>{
     const signer = new RawSigner(keypair, provider);
+    // console.log(signer)
     // console.log(signer.mergeCoin())
     await create(signer);
+
+    // @ts-ignore
+    // console.log(a.effects)
     // await list(signer);
     // await delist_and_take(signer);
     // await split(signer);
