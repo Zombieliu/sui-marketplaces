@@ -21,7 +21,7 @@ export function Logo(props) {
     // </svg>
       <img
           className="w-36 rounded-full"
-          src="/web3gb.svg"
+          src=""
           alt=""
       />
   )
